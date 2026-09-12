@@ -1,5 +1,3 @@
-"""Centralized logging setup."""
-
 import logging
 import sys
 
@@ -7,7 +5,6 @@ from src.config import get_log_level
 
 
 def setup_logging() -> None:
-    """Configure structured, stdout-friendly application logging."""
     log_level = get_log_level()
     logging.basicConfig(
         level=log_level,

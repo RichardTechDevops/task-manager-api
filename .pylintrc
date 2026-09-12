@@ -5,8 +5,11 @@ jobs = 0
 [MESSAGES CONTROL]
 disable =
     missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
     too-few-public-methods,
-    too-many-arguments
+    too-many-arguments,
+    unnecessary-ellipsis
 
 [FORMAT]
 max-line-length = 120

@@ -1,8 +1,7 @@
-"""API and repository tests covering the required CRUD paths."""
-
 from fastapi.testclient import TestClient
 
 from src.models.task import TaskCreate, TaskStatus, TaskUpdate
+from src.rate_limit import limiter
 from src.storage import InMemoryTaskRepository, repository
 
 
@@ -130,6 +129,17 @@ def test_shared_repository_can_be_cleared() -> None:
     repository.create_task(TaskCreate(title="leftover"))
     repository.clear()
     assert repository.list_tasks() == []
+
+
+def test_rate_limit_returns_429(client: TestClient) -> None:
+    try:
+        last = None
+        for _ in range(61):
+            last = client.get("/tasks")
+        assert last is not None
+        assert last.status_code == 429
+    finally:
+        limiter.reset()
 
 
 def test_config_defaults(monkeypatch) -> None:

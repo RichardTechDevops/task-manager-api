@@ -11,22 +11,11 @@
 ## 部署步骤
 
 ```bash
-# 1. 启动本地集群
 minikube start
-
-# 2. 启用 Ingress 插件
 minikube addons enable ingress
-
-# 3. 让 Minikube 使用当前 shell 的 Docker，便于加载刚构建的镜像
-eval $(minikube docker-env)   # Windows PowerShell: minikube docker-env | Invoke-Expression
-
-# 4. 构建应用镜像
+eval $(minikube docker-env)
 docker build -t task-manager-api:local .
-
-# 5. 部署全部资源
 kubectl apply -f k8s/
-
-# 6. 等待 Pod 就绪
 kubectl get pods -n task-manager
 kubectl wait --for=condition=ready pod -l app=task-manager-api -n task-manager --timeout=120s
 ```

@@ -1,6 +1,6 @@
 # Task Manager API
 
-[![CI](https://github.com/OWNER/task-manager-api/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/task-manager-api/actions/workflows/ci.yml)
+[![CI](https://github.com/RichardTechDevops/task-manager-api/actions/workflows/ci.yml/badge.svg)](https://github.com/RichardTechDevops/task-manager-api/actions/workflows/ci.yml)
 
 一个轻量的任务管理 REST API：支持任务增删改查、健康检查、OpenAPI 文档，可在 Docker 和本地 Minikube 中运行，并通过 GitHub Actions 自动完成检查与镜像构建。
 

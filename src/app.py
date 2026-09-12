@@ -1,5 +1,3 @@
-"""FastAPI application entrypoint."""
-
 import logging
 import time
 
@@ -22,10 +20,7 @@ logger = logging.getLogger("task_manager")
 app = FastAPI(
     title="Task Manager API",
     version="1.0.0",
-    description=(
-        "A lightweight RESTful task management service with in-memory storage, "
-        "OpenAPI docs, request logging, and rate limiting."
-    ),
+    description="Task Manager REST API",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -37,7 +32,6 @@ app.add_middleware(SlowAPIMiddleware)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    """Write an access log for every request, including failures."""
     started = time.perf_counter()
     try:
         response = await call_next(request)
@@ -64,7 +58,6 @@ async def log_requests(request: Request, call_next):
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
-    """Return a consistent JSON error body for HTTP exceptions."""
     logger.warning(
         "http error method=%s path=%s status=%s detail=%s",
         request.method,
@@ -77,7 +70,6 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Return 400 for invalid request bodies instead of FastAPI's default 422."""
     logger.warning(
         "validation error method=%s path=%s errors=%s",
         request.method,
