@@ -5,5 +5,4 @@ metadata:
   namespace: task-manager
 data:
   LOG_LEVEL: INFO
-  RATE_LIMIT: 60/minute
   PORT: "8080"

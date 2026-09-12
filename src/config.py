@@ -7,7 +7,3 @@ def get_port() -> int:
 
 def get_log_level() -> str:
     return os.getenv("LOG_LEVEL", "INFO").upper()
-
-
-def get_rate_limit() -> str:
-    return os.getenv("RATE_LIMIT", "60/minute")

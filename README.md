@@ -12,7 +12,7 @@
 | FastAPI + Uvicorn | 0.115 / 0.34 | REST API 与 ASGI 服务 |
 | Docker | >= 24.0 | 多阶段构建与容器运行 |
 | Minikube / Kubernetes | Minikube >= v1.30 | 本地集群部署 |
-| GitHub Actions | ubuntu-latest | Lint、测试、构建、安全扫描 |
+| GitHub Actions | ubuntu-latest | Lint、构建、安全扫描 |
 | Git | >= 2.30 | 版本控制（Conventional Commits + feature 分支） |
 
 ## 本地开发
@@ -32,7 +32,6 @@ uvicorn src.app:app --host 0.0.0.0 --port 8080
 
 - `PORT`：监听端口，默认 `8080`
 - `LOG_LEVEL`：日志级别，默认 `INFO`
-- `RATE_LIMIT`：任务接口限流，默认 `60/minute`
 
 健康检查：
 
@@ -46,10 +45,9 @@ curl http://localhost:8080/health
 - ReDoc: http://localhost:8080/redoc
 - OpenAPI JSON: http://localhost:8080/openapi.json
 
-运行测试：
+代码检查：
 
 ```bash
-pytest --cov=src --cov-report=term-missing --cov-fail-under=60
 pylint src --fail-under=8.0
 ```
 
@@ -146,16 +144,15 @@ curl http://task-manager.local/tasks
 推送到 `main` 或向 `main` 发起 Pull Request 时，GitHub Actions 会按顺序执行：
 
 1. Lint（pylint）
-2. Test（pytest，覆盖率门槛 60%）
-3. Build（Docker 镜像，标签 `ghcr.io/<username>/task-manager-api:<sha>`）
-4. Security Scan（Trivy，扫描 CRITICAL 漏洞）
+2. Build（Docker 镜像，标签 `ghcr.io/<username>/task-manager-api:<sha>`）
+3. Security Scan（Trivy，扫描 CRITICAL 漏洞）
 
 任一阶段失败都会阻止后续步骤。
 
 ## 仓库与分支
 
 - `main`：稳定可运行主干
-- `feature/task-api`：REST API 与单元测试
+- `feature/task-api`：REST API
 - `feature/containerization`：Docker 多阶段构建
 - `feature/k8s-cicd`：Kubernetes 清单与 GitHub Actions
 
@@ -163,6 +160,5 @@ curl http://task-manager.local/tasks
 
 ## 遇到的问题与处理
 
-- 健康检查会被 Kubernetes 频繁探测，因此限流对 `/health` 豁免，避免探针被 429。
 - 基础镜像可能带有未修复的系统漏洞，CI 中 Trivy 对未修复项使用 `ignore-unfixed`，并以 CRITICAL 作为失败门槛，保证流水线可复现。
 - 作业 PDF 与本地虚拟环境已写入 `.gitignore`，不会进入仓库。

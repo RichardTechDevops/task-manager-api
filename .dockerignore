@@ -16,10 +16,8 @@ htmlcov
 *.md
 *.pdf
 k8s
-src/tests
 requirements-dev.txt
 .pylintrc
-pytest.ini
 docker-compose.yml
 .dockerignore
 .gitignore

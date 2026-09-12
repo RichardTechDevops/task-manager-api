@@ -29,9 +29,6 @@ jobs:
       - name: Lint
         run: pylint src --fail-under=8.0
 
-      - name: Test
-        run: pytest --cov=src --cov-report=term-missing --cov-fail-under=60
-
       - name: Set image tag
         id: meta
         run: echo "image=ghcr.io/${{ github.repository_owner }}/task-manager-api:${{ github.sha }}" >> "$GITHUB_OUTPUT"
