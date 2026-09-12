@@ -1,3 +1,5 @@
+# 入口规则：域名 task-manager.local 转发到 Service 8080。
+# 需要先启用 minikube addons enable ingress，并在 hosts 里解析该域名。
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

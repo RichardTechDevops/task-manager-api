@@ -1,3 +1,5 @@
+# FastAPI 应用入口。
+# uvicorn 启动命令：uvicorn src.app:app --host 0.0.0.0 --port 8080
 import logging
 import time
 
@@ -10,6 +12,7 @@ from src.logging_config import setup_logging
 from src.routes.health import router as health_router
 from src.routes.tasks import router as tasks_router
 
+# 进程启动时先配日志，后面中间件和异常处理才能打出请求/错误日志。
 setup_logging()
 logger = logging.getLogger("task_manager")
 
@@ -17,14 +20,16 @@ app = FastAPI(
     title="Task Manager API",
     version="1.0.0",
     description="Task Manager REST API",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs",          # Swagger UI
+    redoc_url="/redoc",        # ReDoc
     openapi_url="/openapi.json",
 )
 
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    # 请求日志：方法、路径、状态码、耗时。
+    # 未捕获异常走 exception 日志，满足作业“请求日志 + 错误日志”。
     started = time.perf_counter()
     try:
         response = await call_next(request)
@@ -51,6 +56,7 @@ async def log_requests(request: Request, call_next):
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # 把 404 等 HTTP 异常统一成 JSON：{"detail": "..."}。
     logger.warning(
         "http error method=%s path=%s status=%s detail=%s",
         request.method,
@@ -63,6 +69,8 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # FastAPI 默认校验失败是 422，作业要求 POST 非法输入返回 400，这里改掉。
+    # ctx 里可能有 ValueError，不能直接 json.dumps，所以只挑 type/loc/msg。
     logger.warning(
         "validation error method=%s path=%s errors=%s",
         request.method,

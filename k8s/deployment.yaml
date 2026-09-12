@@ -1,3 +1,4 @@
+# 工作负载：2 个副本，带资源限制和健康探针。
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,6 +18,7 @@ spec:
     spec:
       containers:
         - name: task-manager-api
+          # 本地 Minikube 使用刚 build 的本地镜像，不从仓库拉。
           image: task-manager-api:local
           imagePullPolicy: IfNotPresent
           ports:
@@ -32,12 +34,14 @@ spec:
             limits:
               cpu: 200m
               memory: 256Mi
+          # 进程挂了会重启。
           livenessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
+          # 没就绪时不接流量。
           readinessProbe:
             httpGet:
               path: /health

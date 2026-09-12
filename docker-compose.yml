@@ -1,3 +1,4 @@
+# 本地一键启动，等价于 docker build + docker run -p 8080:8080。
 services:
   task-manager-api:
     build: .
@@ -8,6 +9,7 @@ services:
       PORT: "8080"
       LOG_LEVEL: INFO
     healthcheck:
+      # 容器内探活，和作业的 /health 端点一致。
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
       interval: 15s
       timeout: 5s

@@ -1,3 +1,5 @@
+# GitHub Actions：push / PR 到 main 时跑 Lint -> Build -> Trivy。
+# 某一步失败默认不会继续后面的步骤。
 name: CI
 
 on:
@@ -27,9 +29,11 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint
+        # 代码风格检查，分数低于 8.0 视为失败。
         run: pylint src --fail-under=8.0
 
       - name: Set image tag
+        # 作业要求标签：ghcr.io/<username>/task-manager-api:<sha>
         id: meta
         run: echo "image=ghcr.io/${{ github.repository_owner }}/task-manager-api:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
@@ -44,6 +48,7 @@ jobs:
           tags: ${{ steps.meta.outputs.image }}
 
       - name: Security scan
+        # 扫描镜像 CRITICAL 漏洞；未修复项忽略，避免基础镜像已知洞卡死流水线。
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ${{ steps.meta.outputs.image }}

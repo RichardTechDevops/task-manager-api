@@ -1,3 +1,4 @@
+# ClusterIP：集群内部通过 8080 访问 Pod。
 apiVersion: v1
 kind: Service
 metadata:

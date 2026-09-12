@@ -4,6 +4,13 @@
 
 一个轻量的任务管理 REST API：支持任务增删改查、健康检查、OpenAPI 文档，可在 Docker 和本地 Minikube 中运行，并通过 GitHub Actions 自动完成检查与镜像构建。
 
+详细说明：
+
+- [代码说明](docs/代码说明.md)：每一层代码做什么、为什么这样设计
+- [操作文档](docs/操作文档.md)：本地、Docker、Minikube、CI 的逐步命令（命令旁有注释）
+
+源码、Dockerfile、K8s 清单和 `ci.yml` 里也写了注释，可对照文档看。
+
 ## 技术栈
 
 | 技术 | 版本 | 用途 |
