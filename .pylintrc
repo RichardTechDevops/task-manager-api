@@ -1,0 +1,18 @@
+[MAIN]
+ignore = tests
+jobs = 0
+
+[MESSAGES CONTROL]
+disable =
+    missing-module-docstring,
+    too-few-public-methods,
+    too-many-arguments
+
+[FORMAT]
+max-line-length = 120
+
+[DESIGN]
+max-attributes = 10
+
+[REPORTS]
+score = yes
