@@ -31,4 +31,3 @@ logs/
 !.env.example
 .cursor/
 *.pdf
-README.md
