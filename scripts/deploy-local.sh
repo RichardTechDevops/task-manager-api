@@ -59,6 +59,9 @@ fi
 docker build -t task-manager-api:local .
 minikube image load task-manager-api:local
 
+# 先等 Namespace 就绪，再 apply 其余资源，避免 NotFound 竞态。
+kubectl apply -f k8s/namespace.yaml
+kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/task-manager --timeout=30s || sleep 3
 kubectl apply -f k8s/
 
 kubectl wait --namespace ingress-nginx \
