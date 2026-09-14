@@ -18,8 +18,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PORT=8080 \
     LOG_LEVEL=INFO
 
-# 作业要求不以 root 跑应用。
-RUN groupadd --system --gid 1000 appuser \
+# 打上 Debian 安全补丁（perl-base 等 CRITICAL），再创建非 root 用户。
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system --gid 1000 appuser \
     && useradd --system --uid 1000 --gid appuser --create-home --shell /usr/sbin/nologin appuser
 
 WORKDIR /app
