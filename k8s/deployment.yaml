@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: task-manager-api
-          # 本地 Minikube 使用刚 build 的本地镜像，不从仓库拉。
+          # 默认标签；deploy-local.sh 会改成每次构建的唯一版本。
           image: task-manager-api:local
           imagePullPolicy: IfNotPresent
           ports:

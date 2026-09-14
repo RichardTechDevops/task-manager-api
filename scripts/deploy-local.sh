@@ -52,17 +52,36 @@ if ! kubectl -n ingress-nginx get pods -l app.kubernetes.io/component=controller
     -p '[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"IfNotPresent"}]' || true
 fi
 
+# 每次构建一个新标签：CI 用提交 SHA，本地用 git short sha，否则用时间戳。
+if [ -z "${IMAGE_TAG:-}" ]; then
+  if [ -n "${GITHUB_SHA:-}" ]; then
+    IMAGE_TAG="${GITHUB_SHA:0:12}"
+  elif git rev-parse --short=12 HEAD >/dev/null 2>&1; then
+    IMAGE_TAG="$(git rev-parse --short=12 HEAD)"
+  else
+    IMAGE_TAG="$(date +%Y%m%d%H%M%S)"
+  fi
+fi
+IMAGE="task-manager-api:${IMAGE_TAG}"
+echo "Building ${IMAGE}"
+
 # 宿主机 Docker 构建后再导入集群，避开 minikube docker-env + containerd 的问题。
 if minikube docker-env -u >/dev/null 2>&1; then
   eval "$(minikube docker-env -u)" || true
 fi
-docker build -t task-manager-api:local .
-minikube image load task-manager-api:local
+docker build -t "${IMAGE}" -t task-manager-api:local .
+minikube image load "${IMAGE}"
 
 # 先等 Namespace 就绪，再 apply 其余资源，避免 NotFound 竞态。
 kubectl apply -f k8s/namespace.yaml
 kubectl wait --for=jsonpath='{.status.phase}'=Active namespace/task-manager --timeout=30s || sleep 3
-kubectl apply -f k8s/
+kubectl apply -f k8s/configmap.yaml -f k8s/service.yaml -f k8s/ingress.yaml
+# apply 时写入本次镜像标签，避免先变成 :local 再滚一次。
+sed "s|image: task-manager-api:local|image: ${IMAGE}|" k8s/deployment.yaml | kubectl apply -f -
+kubectl label deployment/task-manager-api \
+  "app.kubernetes.io/version=${IMAGE_TAG}" \
+  -n task-manager --overwrite
+kubectl rollout status deployment/task-manager-api -n task-manager --timeout=180s
 
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
@@ -76,6 +95,9 @@ kubectl wait --for=condition=ready pod \
 
 echo "===== kubectl get all -n task-manager ====="
 kubectl get all -n task-manager
+
+echo "===== pod images ====="
+kubectl get pods -n task-manager -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
 
 echo "===== kubectl get ingress -n task-manager ====="
 kubectl get ingress -n task-manager
