@@ -169,7 +169,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u RichardTechDevops --password-stdin
 docker pull ghcr.io/richardtechdevops/task-manager-api:latest
 ```
 
-GitHub 云端 Runner 访问不到家里的虚拟机。`deploy-local` 跑在 Ubuntu 上的 [self-hosted runner](https://github.com/RichardTechDevops/task-manager-api/settings/actions/runners)，执行 `scripts/deploy-local.sh`。
+GitHub 云端 Runner 访问不到家里的虚拟机。`deploy-local` 跑在 Ubuntu 上的 [self-hosted runner](https://github.com/RichardTechDevops/task-manager-api/settings/actions/runners)。本机访问 `github.com:443` 会被重置，因此不再 `actions/checkout`，而是下载云端 `pipeline` 上传的源码 artifact，再执行 `scripts/deploy-local.sh`。
 
 ## 仓库与分支
 

@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -73,33 +74,53 @@ jobs:
           docker push "${{ steps.meta.outputs.image }}"
           docker push "${{ steps.meta.outputs.latest }}"
 
+      # 本机 git clone github.com 会被 RST；把部署源码随流水线带过去。
+      - name: Upload deploy sources
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-src
+          include-hidden-files: true
+          path: |
+            Dockerfile
+            .dockerignore
+            requirements.txt
+            src/
+            k8s/
+            scripts/
+
   deploy-local:
     needs: pipeline
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: self-hosted
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
     steps:
-      - name: Prefer HTTP/1.1 for GitHub
-        run: git config --global http.version HTTP/1.1
-
-      - name: Checkout
-        id: checkout
+      - name: Download deploy sources from cloud job
+        id: artifact
         continue-on-error: true
-        uses: actions/checkout@v5
+        uses: actions/download-artifact@v4
+        with:
+          name: deploy-src
+          path: deploy-src
 
       - name: Build, apply, and verify on local Minikube
         run: |
           set -euo pipefail
-          if [ -f scripts/deploy-local.sh ]; then
-            bash scripts/deploy-local.sh
-            exit 0
-          fi
-          for d in "$HOME/py_demo" "$HOME/task-manager-api" \
+          ROOT=""
+          for d in deploy-src "$GITHUB_WORKSPACE" "$HOME/py_demo" "$HOME/task-manager-api" \
                    "$HOME/actions-runner/_work/task-manager-api/task-manager-api"; do
             if [ -f "$d/scripts/deploy-local.sh" ]; then
-              cd "$d"
-              bash scripts/deploy-local.sh
-              exit 0
+              ROOT="$d"
+              break
             fi
           done
-          echo "GitHub 443 不通，且本机没有项目目录。请把仓库放到 ~/py_demo"
-          exit 1
+          if [ -z "$ROOT" ]; then
+            echo "云端 artifact 下载失败，且本机没有项目目录。请把仓库放到 ~/py_demo"
+            exit 1
+          fi
+          echo "Using $ROOT"
+          cd "$ROOT"
+          bash scripts/deploy-local.sh
