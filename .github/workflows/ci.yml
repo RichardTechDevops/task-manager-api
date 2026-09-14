@@ -1,5 +1,4 @@
-# push / PR 到 main：Lint -> Build -> Trivy
-# 仅 push 到 main 且扫描通过后：发布镜像到 ghcr.io
+# 一次推送只跑一条流水线：云端 Lint/Build/Scan/发布，成功后再到 192.168.88.129 部署。
 name: CI
 
 on:
@@ -73,3 +72,34 @@ jobs:
         run: |
           docker push "${{ steps.meta.outputs.image }}"
           docker push "${{ steps.meta.outputs.latest }}"
+
+  deploy-local:
+    needs: pipeline
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    steps:
+      - name: Prefer HTTP/1.1 for GitHub
+        run: git config --global http.version HTTP/1.1
+
+      - name: Checkout
+        id: checkout
+        continue-on-error: true
+        uses: actions/checkout@v5
+
+      - name: Build and apply on local server
+        run: |
+          set -euo pipefail
+          if [ -f scripts/deploy-local.sh ]; then
+            bash scripts/deploy-local.sh
+            exit 0
+          fi
+          for d in "$HOME/py_demo" "$HOME/task-manager-api" \
+                   "$HOME/actions-runner/_work/task-manager-api/task-manager-api"; do
+            if [ -f "$d/scripts/deploy-local.sh" ]; then
+              cd "$d"
+              bash scripts/deploy-local.sh
+              exit 0
+            fi
+          done
+          echo "GitHub 443 不通，且本机没有项目目录。请把仓库放到 ~/py_demo"
+          exit 1

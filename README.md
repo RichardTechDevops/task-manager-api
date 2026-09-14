@@ -150,14 +150,12 @@ curl http://task-manager.local/tasks
 
 ## CI/CD 流水线
 
-推送到 `main` 或向 `main` 发起 Pull Request 时，GitHub Actions（`ubuntu-latest`）按顺序执行：
+推送到 `main` 时只触发一条名为 **CI** 的流水线，里面两个任务按顺序执行：
 
-1. Lint（pylint）
-2. Build（Docker 镜像，标签 `ghcr.io/<username>/task-manager-api:<sha>`）
-3. Security Scan（Trivy，扫描 CRITICAL 漏洞）
-4. Publish（仅 push 到 `main`）：把镜像发布到 GitHub Container Registry
+1. `pipeline`（GitHub `ubuntu-latest`）：Lint → Build → Trivy → 发布 GHCR
+2. `deploy-local`（本机 self-hosted，192.168.88.129）：`docker build` 和 `kubectl apply`
 
-任一阶段失败都会阻止后续步骤。发布后的镜像：
+Pull Request 只跑第 1 个任务。前一步失败则不部署。
 
 ```text
 ghcr.io/richardtechdevops/task-manager-api:<commit-sha>
@@ -171,7 +169,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u RichardTechDevops --password-stdin
 docker pull ghcr.io/richardtechdevops/task-manager-api:latest
 ```
 
-GitHub 云端 Runner 访问不到家里的虚拟机。要自动发到本机 Minikube，需在 Ubuntu 上安装 [self-hosted runner](https://github.com/RichardTechDevops/task-manager-api/settings/actions/runners)，CI 成功后会跑 `scripts/deploy-local.sh`。
+GitHub 云端 Runner 访问不到家里的虚拟机。`deploy-local` 跑在 Ubuntu 上的 [self-hosted runner](https://github.com/RichardTechDevops/task-manager-api/settings/actions/runners)，执行 `scripts/deploy-local.sh`。
 
 ## 仓库与分支
 
