@@ -169,6 +169,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u RichardTechDevops --password-stdin
 docker pull ghcr.io/richardtechdevops/task-manager-api:latest
 ```
 
+GitHub 云端 Runner 访问不到家里的虚拟机。要自动发到本机 Minikube，需在 Ubuntu 上安装 [self-hosted runner](https://github.com/RichardTechDevops/task-manager-api/settings/actions/runners)，CI 成功后会跑 `scripts/deploy-local.sh`。
+
 ## 仓库与分支
 
 - `main`：稳定可运行主干
