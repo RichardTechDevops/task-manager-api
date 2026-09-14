@@ -153,7 +153,7 @@ curl http://task-manager.local/tasks
 推送到 `main` 时只触发一条名为 **CI** 的流水线，里面两个任务按顺序执行：
 
 1. `pipeline`（GitHub `ubuntu-latest`）：Lint → Build → Trivy → 发布 GHCR
-2. `deploy-local`（本机 self-hosted，192.168.88.129）：`docker build` 和 `kubectl apply`
+2. `deploy-local`（本机 self-hosted，192.168.88.129）：`docker build`、`kubectl apply`，并自动执行 `kubectl get all` / Ingress / `curl /health` / `curl /tasks`
 
 Pull Request 只跑第 1 个任务。前一步失败则不部署。
 

@@ -86,7 +86,7 @@ jobs:
         continue-on-error: true
         uses: actions/checkout@v5
 
-      - name: Build and apply on local server
+      - name: Build, apply, and verify on local Minikube
         run: |
           set -euo pipefail
           if [ -f scripts/deploy-local.sh ]; then
