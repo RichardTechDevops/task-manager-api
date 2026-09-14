@@ -146,15 +146,28 @@ curl http://task-manager.local/tasks
 
 `kubectl get all -n task-manager` 预期会看到 2 个 Deployment 副本、ClusterIP Service，以及 Ingress。
 
-## CI 流水线
+## CI/CD 流水线
 
-推送到 `main` 或向 `main` 发起 Pull Request 时，GitHub Actions 会按顺序执行：
+推送到 `main` 或向 `main` 发起 Pull Request 时，GitHub Actions（`ubuntu-latest`）按顺序执行：
 
 1. Lint（pylint）
 2. Build（Docker 镜像，标签 `ghcr.io/<username>/task-manager-api:<sha>`）
 3. Security Scan（Trivy，扫描 CRITICAL 漏洞）
+4. Publish（仅 push 到 `main`）：把镜像发布到 GitHub Container Registry
 
-任一阶段失败都会阻止后续步骤。
+任一阶段失败都会阻止后续步骤。发布后的镜像：
+
+```text
+ghcr.io/richardtechdevops/task-manager-api:<commit-sha>
+ghcr.io/richardtechdevops/task-manager-api:latest
+```
+
+拉取：
+
+```bash
+echo $GITHUB_TOKEN | docker login ghcr.io -u RichardTechDevops --password-stdin
+docker pull ghcr.io/richardtechdevops/task-manager-api:latest
+```
 
 ## 仓库与分支
 

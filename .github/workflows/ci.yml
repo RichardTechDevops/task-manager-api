@@ -1,5 +1,5 @@
-# GitHub Actions：push / PR 到 main 时跑 Lint -> Build -> Trivy。
-# 某一步失败默认不会继续后面的步骤。
+# push / PR 到 main：Lint -> Build -> Trivy
+# 仅 push 到 main 且扫描通过后：发布镜像到 ghcr.io
 name: CI
 
 on:
@@ -29,26 +29,36 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Lint
-        # 代码风格检查，分数低于 8.0 视为失败。
         run: pylint src --fail-under=8.0
 
       - name: Set image tag
-        # 作业要求标签：ghcr.io/<username>/task-manager-api:<sha>
         id: meta
-        run: echo "image=ghcr.io/${{ github.repository_owner }}/task-manager-api:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=ghcr.io/${OWNER}/task-manager-api:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "latest=ghcr.io/${OWNER}/task-manager-api:latest" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: .
           load: true
-          tags: ${{ steps.meta.outputs.image }}
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
 
       - name: Security scan
-        # 扫描镜像 CRITICAL 漏洞；未修复项忽略，避免基础镜像已知洞卡死流水线。
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ${{ steps.meta.outputs.image }}
@@ -57,3 +67,9 @@ jobs:
           ignore-unfixed: true
           vuln-type: os,library
           severity: CRITICAL
+
+      - name: Publish image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push "${{ steps.meta.outputs.image }}"
+          docker push "${{ steps.meta.outputs.latest }}"
