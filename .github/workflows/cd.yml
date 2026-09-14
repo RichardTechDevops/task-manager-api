@@ -1,21 +1,17 @@
-# GitHub 云端 Runner 到不了家里的虚拟机。
-# 本工作流跑在 Ubuntu 上的 self-hosted runner，CI 成功后自动部署到本机 Minikube。
+# 在 192.168.88.129 的 self-hosted runner 上执行 docker build 和 kubectl apply。
 name: CD
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
   deploy-local:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to local Minikube
+      - name: Build and apply on local server
         run: bash scripts/deploy-local.sh

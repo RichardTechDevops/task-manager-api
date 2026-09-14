@@ -127,6 +127,8 @@ docker compose up --build
 
 完整命令见 [k8s/README.md](k8s/README.md)。简要步骤：
 
+在 `192.168.88.129` 上手动执行，或由 GitHub Actions 的 self-hosted runner 自动执行：
+
 ```bash
 minikube start
 minikube addons enable ingress
