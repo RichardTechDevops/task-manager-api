@@ -123,4 +123,6 @@ jobs:
           fi
           echo "Using $ROOT"
           cd "$ROOT"
+          # 旧脚本会再次 enable ingress 并打坏已就绪的控制器。
+          sed -i 's/^[[:space:]]*minikube addons enable ingress/# skipped: minikube addons enable ingress/' scripts/deploy-local.sh
           bash scripts/deploy-local.sh

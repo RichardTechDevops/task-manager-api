@@ -18,10 +18,39 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+load_ingress_images() {
+  docker pull k8s.m.daocloud.io/ingress-nginx/controller:v1.15.1
+  docker tag k8s.m.daocloud.io/ingress-nginx/controller:v1.15.1 \
+    registry.k8s.io/ingress-nginx/controller:v1.15.1
+  minikube image load registry.k8s.io/ingress-nginx/controller:v1.15.1
+
+  docker pull k8s.m.daocloud.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  docker tag k8s.m.daocloud.io/ingress-nginx/kube-webhook-certgen:v1.6.9 \
+    registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+  minikube image load registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+}
+
 if ! minikube status >/dev/null 2>&1; then
   minikube start --driver=docker
 fi
-minikube addons enable ingress
+
+# 已经启用过就不要再 enable：会重建 addon，重新去拉 registry.k8s.io。
+if minikube addons list | grep -E '^[[:space:]]*ingress[[:space:]]' | grep -q enabled; then
+  echo "ingress addon already enabled, skip minikube addons enable"
+else
+  load_ingress_images
+  minikube addons enable ingress
+fi
+
+# 若 controller 还在拉镜像，补灌本地镜像并改成 IfNotPresent。
+if ! kubectl -n ingress-nginx get pods -l app.kubernetes.io/component=controller \
+      --no-headers 2>/dev/null | grep -q '1/1'; then
+  load_ingress_images
+  kubectl -n ingress-nginx set image deploy/ingress-nginx-controller \
+    controller=registry.k8s.io/ingress-nginx/controller:v1.15.1 || true
+  kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type=json \
+    -p '[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"IfNotPresent"}]' || true
+fi
 
 # 宿主机 Docker 构建后再导入集群，避开 minikube docker-env + containerd 的问题。
 if minikube docker-env -u >/dev/null 2>&1; then
